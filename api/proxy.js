@@ -1,7 +1,6 @@
 const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
-  // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Token');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -16,17 +15,14 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Collect headers from the incoming request to forward to the target
     const forwardHeaders = {
       ...req.headers,
-      'host': new URL(target).host // Set host header to the target host
+      'host': new URL(target).host
     };
 
-    // Remove headers that should not be forwarded
     delete forwardHeaders.cookie;
-    delete forwardHeaders['content-length']; // This will be set automatically by fetch
+    delete forwardHeaders['content-length'];
     
-    // Create a new request body from the incoming request
     const body = req.method !== 'GET' && req.method !== 'HEAD' ? req.body : undefined;
 
     const upstream = await fetch(target, {
@@ -36,7 +32,6 @@ module.exports = async (req, res) => {
       redirect: 'follow'
     });
 
-    // Forward the status and headers from the upstream response
     res.status(upstream.status);
     upstream.headers.forEach((value, key) => {
       if (key.toLowerCase() !== 'content-length') {
@@ -44,7 +39,6 @@ module.exports = async (req, res) => {
       }
     });
 
-    // Send the response body
     const buffer = await upstream.buffer();
     res.send(buffer);
   } catch (err) {
